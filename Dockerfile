@@ -24,7 +24,7 @@ COPY docker/php.ini $PHP_INI_DIR/conf.d/zz-app.ini
 WORKDIR /app
 COPY --from=vendor /app /app
 
-RUN mkdir -p storage/framework/{cache,sessions,views} storage/logs bootstrap/cache \
+RUN mkdir -p storage/framework/cache storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
 ENV SERVER_NAME=:8000 \
