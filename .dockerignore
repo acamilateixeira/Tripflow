@@ -1,0 +1,14 @@
+.git
+.github
+.env
+vendor
+node_modules
+storage/logs/*
+storage/phpstan
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+tests
+docs
+insomnia
+database/database.sqlite

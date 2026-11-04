@@ -1,0 +1,401 @@
+{
+  "_type": "export",
+  "__export_format": 4,
+  "__export_date": "2026-11-04T12:00:00.000Z",
+  "__export_source": "tripflow",
+  "resources": [
+    {
+      "_id": "wrk_tripflow",
+      "_type": "workspace",
+      "parentId": null,
+      "name": "TripFlow API",
+      "description": "Coleção da API de viagens corporativas. Rode o seed (php artisan migrate --seed), faça login nas duas contas e copie os tokens para o ambiente.",
+      "scope": "collection"
+    },
+    {
+      "_id": "env_base",
+      "_type": "environment",
+      "parentId": "wrk_tripflow",
+      "name": "Base",
+      "data": {},
+      "dataPropertyOrder": {}
+    },
+    {
+      "_id": "env_local",
+      "_type": "environment",
+      "parentId": "env_base",
+      "name": "Local (docker compose)",
+      "data": {
+        "base_url": "http://localhost:8000/api",
+        "token_traveler": "cole-aqui-o-token-da-viajante",
+        "token_approver": "cole-aqui-o-token-da-gestora",
+        "travel_request_id": "1",
+        "cost_center_id": "1",
+        "month": "2026-12"
+      },
+      "color": "#7d69cb"
+    },
+    {
+      "_id": "fld_auth",
+      "_type": "request_group",
+      "parentId": "wrk_tripflow",
+      "name": "1. Autenticação",
+      "metaSortKey": 0
+    },
+    {
+      "_id": "fld_flow",
+      "_type": "request_group",
+      "parentId": "wrk_tripflow",
+      "name": "2. Fluxo da solicitação",
+      "metaSortKey": 1
+    },
+    {
+      "_id": "fld_budget",
+      "_type": "request_group",
+      "parentId": "wrk_tripflow",
+      "name": "3. Orçamento",
+      "metaSortKey": 2
+    },
+    {
+      "_id": "fld_ops",
+      "_type": "request_group",
+      "parentId": "wrk_tripflow",
+      "name": "4. Operação",
+      "metaSortKey": 3
+    },
+    {
+      "_id": "req_1",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login — viajante",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/auth/token",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "description": "Copie o campo token para token_traveler no ambiente.",
+      "metaSortKey": 1,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"viajante@acme.test\",\n  \"password\": \"password\",\n  \"device_name\": \"insomnia\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_2",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login — gestora (aprovadora)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/auth/token",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "description": "Copie o campo token para token_approver.",
+      "metaSortKey": 2,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"gestora@acme.test\",\n  \"password\": \"password\",\n  \"device_name\": \"insomnia\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_3",
+      "_type": "request",
+      "parentId": "fld_auth",
+      "name": "Login — outra empresa (teste de isolamento)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/auth/token",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "description": "",
+      "metaSortKey": 3,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"email\": \"viajante@globex.test\",\n  \"password\": \"password\"\n}"
+      },
+      "authentication": {}
+    },
+    {
+      "_id": "req_10",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Criar solicitação (idempotente)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/travel-requests",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Idempotency-Key",
+          "value": "{% uuid 'v4' %}",
+          "description": "Repita o mesmo valor para testar o replay"
+        }
+      ],
+      "description": "Envia Idempotency-Key. Fixe a chave e reenvie: a resposta volta com Idempotent-Replayed: true e nada é duplicado.",
+      "metaSortKey": 10,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"cost_center_id\": 1,\n  \"origin\": \"CNF\",\n  \"destination\": \"GRU\",\n  \"departure_on\": \"2026-12-14\",\n  \"return_on\": \"2026-12-16\",\n  \"estimated_cost_cents\": 350000,\n  \"reason\": \"Kickoff presencial com cliente em São Paulo.\"\n}"
+      },
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_traveler }}"
+      }
+    },
+    {
+      "_id": "req_11",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Listar solicitações",
+      "method": "GET",
+      "url": "{{ _.base_url }}/v1/travel-requests?status=pending_approval&per_page=20",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "description": "Paginação por cursor: use links.next. Viajantes veem só as próprias.",
+      "metaSortKey": 11,
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_approver }}"
+      }
+    },
+    {
+      "_id": "req_12",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Detalhar solicitação",
+      "method": "GET",
+      "url": "{{ _.base_url }}/v1/travel-requests/{{ _.travel_request_id }}",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "description": "",
+      "metaSortKey": 12,
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_traveler }}"
+      }
+    },
+    {
+      "_id": "req_13",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Enviar para aprovação",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/travel-requests/{{ _.travel_request_id }}/submit",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "description": "",
+      "metaSortKey": 13,
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_traveler }}"
+      }
+    },
+    {
+      "_id": "req_14",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Aprovar (gestora)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/travel-requests/{{ _.travel_request_id }}/approve",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "description": "422 budget_exceeded se estourar o orçamento do mês; 403 se tentar aprovar a própria viagem.",
+      "metaSortKey": 14,
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_approver }}"
+      }
+    },
+    {
+      "_id": "req_15",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Recusar (gestora)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/travel-requests/{{ _.travel_request_id }}/reject",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        }
+      ],
+      "description": "",
+      "metaSortKey": 15,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"reason\": \"Reunião pode ser feita por videoconferência.\"\n}"
+      },
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_approver }}"
+      }
+    },
+    {
+      "_id": "req_16",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Emitir reservas (idempotente)",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/travel-requests/{{ _.travel_request_id }}/bookings",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        },
+        {
+          "name": "Content-Type",
+          "value": "application/json"
+        },
+        {
+          "name": "Idempotency-Key",
+          "value": "{% uuid 'v4' %}",
+          "description": "Repita o mesmo valor para testar o replay"
+        }
+      ],
+      "description": "",
+      "metaSortKey": 16,
+      "body": {
+        "mimeType": "application/json",
+        "text": "{\n  \"items\": [\n    {\n      \"type\": \"flight\",\n      \"supplier\": \"LATAM\",\n      \"amount_cents\": 180000\n    },\n    {\n      \"type\": \"hotel\",\n      \"supplier\": \"Ibis Paulista\",\n      \"amount_cents\": 90000\n    }\n  ]\n}"
+      },
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_traveler }}"
+      }
+    },
+    {
+      "_id": "req_17",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Cancelar",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/travel-requests/{{ _.travel_request_id }}/cancel",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "description": "",
+      "metaSortKey": 17,
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_traveler }}"
+      }
+    },
+    {
+      "_id": "req_18",
+      "_type": "request",
+      "parentId": "fld_flow",
+      "name": "Erro: transição inválida",
+      "method": "POST",
+      "url": "{{ _.base_url }}/v1/travel-requests/{{ _.travel_request_id }}/approve",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "description": "Chame após aprovar: retorna 422 invalid_transition.",
+      "metaSortKey": 18,
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_approver }}"
+      }
+    },
+    {
+      "_id": "req_20",
+      "_type": "request",
+      "parentId": "fld_budget",
+      "name": "Resumo do orçamento do mês",
+      "method": "GET",
+      "url": "{{ _.base_url }}/v1/cost-centers/{{ _.cost_center_id }}/budget?month={{ _.month }}",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "description": "Cacheado no Redis por 5 min e invalidado a cada aprovação/cancelamento.",
+      "metaSortKey": 20,
+      "body": {},
+      "authentication": {
+        "type": "bearer",
+        "token": "{{ _.token_approver }}"
+      }
+    },
+    {
+      "_id": "req_30",
+      "_type": "request",
+      "parentId": "fld_ops",
+      "name": "Health check",
+      "method": "GET",
+      "url": "{{ _.base_url }}/health",
+      "headers": [
+        {
+          "name": "Accept",
+          "value": "application/json"
+        }
+      ],
+      "description": "Banco, cache e backlog da outbox.",
+      "metaSortKey": 30,
+      "body": {},
+      "authentication": {}
+    }
+  ]
+}

@@ -1,0 +1,66 @@
+name: Revisão por IA
+
+# Revisão automática de PR com o Claude. Comenta problemas inline e deixa um
+# resumo no PR. Não aprova nem bloqueia: a decisão continua sendo humana.
+#
+# Configuração (uma vez): Settings → Secrets and variables → Actions →
+# New repository secret → ANTHROPIC_API_KEY.
+
+on:
+  pull_request:
+    types: [opened, synchronize, ready_for_review]
+
+concurrency:
+  group: ai-review-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  review:
+    # PR de fork não recebe secrets; rascunhos não são revisados.
+    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      pull-requests: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 1
+
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          prompt: |
+            REPO: ${{ github.repository }}
+            PR NUMBER: ${{ github.event.pull_request.number }}
+
+            Você está revisando um PR de uma API Laravel. Leia o CLAUDE.md e os ADRs
+            em docs/adr antes de revisar: eles descrevem as decisões que o código deve respeitar.
+
+            Foque, nesta ordem:
+            1. Bugs e regras de negócio: transições de status fora do enum, orçamento,
+               segregação de funções (ninguém aprova a própria viagem).
+            2. Concorrência e consistência: mudança de estado sem transação, evento de
+               outbox gravado fora da transação, lock ausente ou em ordem diferente.
+            3. Segurança: vazamento entre empresas (escopo company), autorização ausente,
+               mass assignment, dados sensíveis em log.
+            4. Performance: N+1, consultas sem índice, OFFSET em listagens grandes.
+            5. Testes: o comportamento novo tem teste? O teste falharia sem a mudança?
+
+            Regras:
+            - Comente apenas o que for relevante; não comente estilo (o Pint cuida disso).
+            - Cada comentário inline deve explicar o problema e sugerir a correção.
+            - Termine com um comentário de resumo: riscos encontrados e se algum ADR
+              precisa ser atualizado.
+            - Escreva em português.
+
+            Note: The PR branch is already checked out in the current working directory.
+
+            Use `gh pr comment` for top-level feedback.
+            Use `mcp__github_inline_comment__create_inline_comment` (with `confirmed: true`) to highlight specific code issues.
+            Only post GitHub comments - don't submit review text as messages.
+
+          claude_args: |
+            --allowedTools "mcp__github_inline_comment__create_inline_comment,Bash(gh pr comment:*),Bash(gh pr diff:*),Bash(gh pr view:*)"

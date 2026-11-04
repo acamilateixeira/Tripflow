@@ -1,0 +1,71 @@
+# Ambiente completo: API + worker + relay da outbox + consumidor + MySQL + Redis + RabbitMQ.
+#   docker compose up -d --build
+#   docker compose exec api php artisan migrate --seed
+# API: http://localhost:8000  ·  RabbitMQ: http://localhost:15672 (guest/guest)
+
+x-app: &app
+  build: .
+  image: tripflow:local
+  env_file: .env
+  environment:
+    DB_HOST: mysql
+    REDIS_HOST: redis
+    RABBITMQ_HOST: rabbitmq
+  depends_on:
+    mysql: { condition: service_healthy }
+    redis: { condition: service_healthy }
+    rabbitmq: { condition: service_healthy }
+  restart: unless-stopped
+
+services:
+  api:
+    <<: *app
+    ports: ["8000:8000"]
+
+  worker:
+    <<: *app
+    command: ["php", "artisan", "queue:work", "redis", "--tries=3", "--backoff=5"]
+    healthcheck: { disable: true }
+
+  outbox-relay:
+    <<: *app
+    command: ["php", "artisan", "outbox:relay"]
+    healthcheck: { disable: true }
+
+  consumer:
+    <<: *app
+    command: ["php", "artisan", "events:consume"]
+    healthcheck: { disable: true }
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_DATABASE: tripflow
+      MYSQL_USER: tripflow
+      MYSQL_PASSWORD: secret
+      MYSQL_ROOT_PASSWORD: root
+    ports: ["3306:3306"]
+    volumes: [mysql-data:/var/lib/mysql]
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-psecret", "-utripflow"]
+      interval: 5s
+      retries: 20
+
+  redis:
+    image: redis:7-alpine
+    ports: ["6379:6379"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      retries: 10
+
+  rabbitmq:
+    image: rabbitmq:4-management-alpine
+    ports: ["5672:5672", "15672:15672"]
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
+      interval: 10s
+      retries: 10
+
+volumes:
+  mysql-data:
