@@ -25,7 +25,9 @@ afterEach(fn () => $this->connection?->reset());
 it('publica com confirmação, routing key e message_id da outbox', function () {
     $exchange = 'tripflow.test.'.Str::random(6);
     $channel = $this->connection->channel();
-    $channel->exchange_declare($exchange, 'topic', false, false, true);
+    // Mesmos argumentos que o publisher usa (durável, sem auto-delete): o broker
+    // rejeita redeclaração com argumentos diferentes.
+    $channel->exchange_declare($exchange, 'topic', false, true, false);
     [$queue] = $channel->queue_declare('', false, false, true, true);
     $channel->queue_bind($queue, $exchange, 'travel_request.*');
 
@@ -53,4 +55,6 @@ it('publica com confirmação, routing key e message_id da outbox', function () 
         ->and($received->get('correlation_id'))->toBe('corr-123')
         ->and($received->getRoutingKey())->toBe('travel_request.approved')
         ->and(json_decode($received->getBody(), true))->toBe(['travel_request_id' => 42, 'status' => 'approved']);
+
+    $channel->exchange_delete($exchange);
 });

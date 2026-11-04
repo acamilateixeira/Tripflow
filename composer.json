@@ -2,7 +2,7 @@
     "$schema": "https://getcomposer.org/schema.json",
     "name": "acamilateixeira/tripflow",
     "type": "project",
-    "description": "API de gest\u00e3o de viagens corporativas: solicita\u00e7\u00f5es, aprova\u00e7\u00e3o, reservas e eventos.",
+    "description": "API de gestão de viagens corporativas: solicitações, aprovação, reservas e eventos.",
     "keywords": [
         "laravel",
         "api",

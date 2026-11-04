@@ -39,5 +39,6 @@
         <env name="TELESCOPE_ENABLED" value="false"/>
         <env name="NIGHTWATCH_ENABLED" value="false"/>
         <env name="MESSAGING_DRIVER" value="memory"/>
+        <env name="LOG_CHANNEL" value="null"/>
     </php>
 </phpunit>
