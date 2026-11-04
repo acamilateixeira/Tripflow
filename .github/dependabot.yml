@@ -1,16 +1,25 @@
 version: 2
 updates:
+  # Minor/patch do Laravel e do Pest agrupados. Versões major são atualizadas
+  # à mão, num PR próprio, porque podem exigir mudança de código.
   - package-ecosystem: composer
     directory: /
     schedule: { interval: weekly }
     groups:
       laravel:
         patterns: ["laravel/*", "larastan/*", "pestphp/*"]
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: "*"
+        update-types: ["version-update:semver-major"]
     commit-message: { prefix: chore }
 
   - package-ecosystem: github-actions
     directory: /
     schedule: { interval: monthly }
+    groups:
+      actions:
+        patterns: ["*"]
     commit-message: { prefix: ci }
 
   - package-ecosystem: docker
