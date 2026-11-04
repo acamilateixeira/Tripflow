@@ -4,7 +4,10 @@
 FROM composer:2 AS vendor
 WORKDIR /app
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction
+# A imagem do Composer não tem as extensões da aplicação (sockets, redis, pcntl);
+# elas são instaladas e verificadas no estágio de runtime abaixo.
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --no-interaction \
+    --ignore-platform-req=ext-sockets --ignore-platform-req=ext-redis --ignore-platform-req=ext-pcntl
 COPY . .
 RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
 
@@ -13,7 +16,8 @@ RUN composer dump-autoload --optimize --classmap-authoritative --no-dev
 FROM dunglas/frankenphp:1-php8.3-alpine AS app
 
 RUN install-php-extensions pdo_mysql redis sockets pcntl opcache intl \
-    && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+    && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini" \
+    && php -m | grep -qE '^sockets$' && php -m | grep -qE '^redis$'
 
 COPY docker/php.ini $PHP_INI_DIR/conf.d/zz-app.ini
 
