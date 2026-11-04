@@ -54,6 +54,22 @@ Cada transição publica um evento (`travel_request.submitted`, `.approved`, `.r
 
 ## Como rodar
 
+### No navegador, sem instalar nada (GitHub Codespaces)
+
+[![Abrir no GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/acamilateixeira/tripflow?quickstart=1)
+
+O Codespaces sobe PHP 8.3, MySQL, Redis e RabbitMQ, instala as dependências,
+roda as migrations com o seed e inicia a API, o relay da outbox e o consumidor.
+Quando o terminal mostrar "Ambiente pronto", rode:
+
+```bash
+bash scripts/demo.sh
+```
+
+O script percorre o fluxo inteiro contra a API real (login, idempotência,
+aprovação, orçamento, reservas, isolamento entre empresas e publicação dos
+eventos) e mostra ✔ ou ✘ em cada verificação. O mesmo script roda no CI.
+
 ### Com Docker (ambiente completo)
 
 ```bash

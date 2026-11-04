@@ -103,6 +103,16 @@ jobs:
       - name: Testes com cobertura (mínimo 80%)
         run: vendor/bin/pest --coverage --min=80 --coverage-clover=coverage.xml --log-junit=junit.xml
 
+      - name: Demonstração ponta a ponta (API real + RabbitMQ)
+        env:
+          MESSAGING_DRIVER: rabbitmq
+          LOG_CHANNEL: single
+        run: |
+          php artisan migrate:fresh --seed --force
+          php artisan serve --port=8000 > storage/logs/serve.log 2>&1 &
+          for _ in $(seq 1 20); do curl -sf http://localhost:8000/api/health >/dev/null && break; sleep 1; done
+          bash scripts/demo.sh
+
       - name: Publicar resultado dos testes
         if: always()
         uses: actions/upload-artifact@v4
