@@ -30,6 +30,8 @@ jobs:
             build
 
       - name: Descrição preenchida
+        # PRs do Dependabot têm descrição gerada (changelog), sem o template.
+        if: github.actor != 'dependabot[bot]'
         env:
           BODY: ${{ github.event.pull_request.body }}
         run: |

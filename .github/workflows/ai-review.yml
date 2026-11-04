@@ -17,7 +17,12 @@ concurrency:
 jobs:
   review:
     # PR de fork não recebe secrets; rascunhos não são revisados.
-    if: github.event.pull_request.draft == false && github.event.pull_request.head.repo.full_name == github.repository
+    # Dependabot não recebe secrets do repositório; atualizações de dependência
+    # são validadas pelo CI (testes + composer audit).
+    if: >-
+      github.event.pull_request.draft == false &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.actor != 'dependabot[bot]'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     permissions:
