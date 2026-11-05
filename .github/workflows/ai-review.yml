@@ -36,7 +36,7 @@ jobs:
         if: env.ANTHROPIC_API_KEY == ''
         run: echo "::notice::Revisão por IA pulada. Crie o secret ANTHROPIC_API_KEY para ativá-la."
 
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 1
 
