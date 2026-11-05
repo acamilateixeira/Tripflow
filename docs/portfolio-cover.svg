@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1080 330" role="img" aria-labelledby="title desc">
+  <title id="title">TripFlow</title>
+  <desc id="desc">CORPORATE TRAVEL API. REQUEST  /  APPROVE  /  BOOK.</desc>
+  <defs>
+    <linearGradient id="background" x2="1" y2="1">
+      <stop stop-color="#102637"/>
+      <stop offset="1" stop-color="#0C4C53"/>
+    </linearGradient>
+    <pattern id="grid" width="30" height="30" patternUnits="userSpaceOnUse">
+      <path d="M0 30V0H30" fill="none" stroke="#C7E7EA" stroke-opacity=".12"/>
+    </pattern>
+    <clipPath id="frame"><rect width="1080" height="330" rx="28"/></clipPath>
+  </defs>
+  <g clip-path="url(#frame)">
+    <rect width="1080" height="330" fill="url(#background)"/>
+    <path d="M745 0h335v330H640z" fill="url(#grid)"/>
+    <rect x="710" y="48" width="306" height="234" rx="24" fill="#102637" fill-opacity=".56" stroke="#C7E7EA" stroke-opacity=".3"/>
+    <path d="M748 234h41q24 0 24-24v-58q0-24 24-24h35q24 0 24 24v19q0 24 24 24h34" fill="none" stroke="#87E8D3" stroke-width="5" stroke-linecap="round"/><circle cx="748" cy="234" r="10" fill="#102637" stroke="#87E8D3" stroke-width="4"/><circle cx="863" cy="128" r="10" fill="#102637" stroke="#87E8D3" stroke-width="4"/><path d="m949 186 10 9-10 9" fill="none" stroke="#87E8D3" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+    <g font-family="system-ui,-apple-system,sans-serif">
+      <text x="62" y="92" fill="#87E8D3" font-size="18" font-weight="700" letter-spacing="4">CORPORATE TRAVEL API</text>
+      <text x="57" y="197" fill="#F7FBFF" font-size="100" font-weight="800" letter-spacing="-3">TripFlow</text>
+      <text x="63" y="250" fill="#C7E7EA" font-size="19" font-weight="600" letter-spacing="3">REQUEST  /  APPROVE  /  BOOK</text>
+    </g>
+  </g>
+</svg>

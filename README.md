@@ -1,22 +1,37 @@
-# TripFlow — API de viagens corporativas
+![TripFlow — solicitação, aprovação e reserva](docs/portfolio-cover.svg)
 
-API em **Laravel 12 / PHP 8.3** para o ciclo de uma viagem a trabalho: a pessoa
-solicita, a gestora aprova dentro do orçamento do centro de custo, as reservas
-são emitidas e os outros sistemas ficam sabendo por eventos.
+# TripFlow
 
-O domínio é pequeno de propósito. O foco está nos problemas que aparecem quando
-esse fluxo roda em produção, com várias empresas, várias réplicas e integrações
-que falham:
+**Português** · [English](README.en.md)
 
-| Problema real | Como foi resolvido | Onde |
+**API de viagens corporativas com aprovação por orçamento e eventos de domínio.** O TripFlow cobre da solicitação à emissão de reservas, com regras de acesso por empresa, controle de concorrência e integração assíncrona. A emissão usa um fornecedor simulado.
+
+[Tecnologias](#tecnologias) · [Decisões técnicas](#decisões-técnicas) · [Arquitetura](#arquitetura) · [Rodar a demo](#como-rodar) · [ADRs](#decisões-de-arquitetura)
+
+## Tecnologias
+
+| Tecnologia | Papel no TripFlow |
+| --- | --- |
+| **PHP 8.3, Laravel 12 e Sanctum** | API REST, validação, autorização por papel e tokens de acesso. |
+| **MySQL 8.4** | Estado das viagens, reservas, orçamento, locks transacionais, outbox e inbox. |
+| **Redis 7** | Cache de orçamento, locks distribuídos e armazenamento de respostas idempotentes. |
+| **RabbitMQ 4 e php-amqplib** | Publicação de eventos de domínio, confirmações do broker e fila de mensagens rejeitadas. |
+| **Docker Compose e Codespaces** | Ambiente de desenvolvimento reproduzível com API, banco, cache e broker. |
+| **Pest, Larastan, Pint e GitHub Actions** | Testes, análise estática, estilo e automação de CI/CD. |
+
+## Decisões técnicas
+
+O domínio de viagens concentra os casos de concorrência, isolamento entre empresas e falhas entre o banco e o broker.
+
+| Problema | Decisão e motivo | Onde |
 |---|---|---|
-| Evento publicado sem o banco ter commitado (ou o contrário) | Transactional outbox + relay com `SKIP LOCKED` e backoff | [ADR 0002](docs/adr/0002-transactional-outbox.md) |
-| Duas aprovações simultâneas estourando o orçamento | `SELECT … FOR UPDATE` no centro de custo, ordem fixa de locks | [ADR 0003](docs/adr/0003-concorrencia-orcamento-e-reservas.md) |
-| App reenvia a requisição por timeout e duplica a reserva | `Idempotency-Key` com replay da resposta (Redis) + lock distribuído | `EnsureIdempotency`, `BookTravelRequest` |
-| Broker reentrega a mesma mensagem | Consumidor idempotente com tabela *inbox* | `NotifyTravelerOnDecision` |
-| Empresa A enxergando dados da empresa B | Escopo global por `company_id`, 404 para IDs de outra empresa | [ADR 0004](docs/adr/0004-isolamento-multi-tenant.md) |
-| Status "pulando" etapas | Máquina de estados no enum; única porta é `transitionTo()` | `TravelRequestStatus` |
-| Seguir uma operação da API até o consumidor | `X-Request-Id` → logs JSON → `correlation_id` da mensagem | `AssignCorrelationId` |
+| Evento publicado sem o banco ter commitado (ou o contrário) | A outbox registra o evento na transação da mudança de estado. O relay publica depois e reprocessa falhas com backoff. | [ADR 0002](docs/adr/0002-transactional-outbox.md) |
+| Duas aprovações simultâneas estourando o orçamento | `SELECT … FOR UPDATE` serializa aprovações no mesmo centro de custo. Uma ordem fixa de locks reduz o risco de deadlock. | [ADR 0003](docs/adr/0003-concorrencia-orcamento-e-reservas.md) |
+| App reenvia a requisição por timeout e duplica a reserva | `Idempotency-Key` permite repetir a resposta. O lock distribuído coordena a emissão sem manter uma transação aberta durante a chamada ao fornecedor. | `EnsureIdempotency`, `BookTravelRequest` |
+| Broker reentrega a mesma mensagem | A *inbox* deduplica pelo ID da mensagem, necessário porque o relay oferece entrega pelo menos uma vez. | `NotifyTravelerOnDecision` |
+| Empresa A enxergando dados da empresa B | O escopo global por `company_id` reduz a dependência de filtros manuais. O 404 evita revelar recursos de outra empresa. | [ADR 0004](docs/adr/0004-isolamento-multi-tenant.md) |
+| Status "pulando" etapas | A máquina de estados concentra transições válidas em `transitionTo()`. | `TravelRequestStatus` |
+| Seguir uma operação da API até o consumidor | O mesmo identificador liga a requisição HTTP, os logs e o evento assíncrono. | `AssignCorrelationId` |
 
 ## Arquitetura
 
@@ -50,7 +65,7 @@ draft ──submit──▶ pending_approval ──approve──▶ approved ─
 cancel: a partir de draft, pending_approval, approved e booked
 ```
 
-Cada transição publica um evento (`travel_request.submitted`, `.approved`, `.rejected`, `.booked`, `.cancelled`).
+Cada transição registra um evento na outbox (`travel_request.submitted`, `.approved`, `.rejected`, `.booked`, `.cancelled`).
 
 ## Como rodar
 
@@ -87,10 +102,9 @@ RabbitMQ (painel em `http://localhost:15672`, guest/guest).
 ```bash
 composer install
 cp .env.example .env && php artisan key:generate
-# para rodar sem MySQL/RabbitMQ, ajuste no .env:
-#   DB_CONNECTION=sqlite  CACHE_STORE=array  MESSAGING_DRIVER=log
-php artisan migrate --seed
-php artisan serve
+touch database/database.sqlite
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan migrate --seed
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan serve
 ```
 
 **Usuários do seed** (senha `password`): `viajante@acme.test`, `gestora@acme.test`,
