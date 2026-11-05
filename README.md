@@ -6,7 +6,13 @@
 
 **API de viagens corporativas com aprovação por orçamento e eventos de domínio.** O TripFlow cobre da solicitação à emissão de reservas, com regras de acesso por empresa, controle de concorrência e integração assíncrona. A emissão usa um fornecedor simulado.
 
-[Tecnologias](#tecnologias) · [Decisões técnicas](#decisões-técnicas) · [Arquitetura](#arquitetura) · [Rodar a demo](#como-rodar) · [ADRs](#decisões-de-arquitetura)
+[O problema](#o-problema) · [Tecnologias](#tecnologias) · [Decisões técnicas](#decisões-técnicas) · [Arquitetura](#arquitetura) · [Rodar a demo](#como-rodar) · [ADRs](#decisões-de-arquitetura)
+
+## O problema
+
+Uma solicitação de viagem reserva parte de um orçamento compartilhado e pode gerar reservas em sistemas externos. Se duas aprovações leem o mesmo saldo antes de registrar o gasto, ambas podem parecer válidas e, juntas, ultrapassar o limite. Se uma chamada de reserva demora, o cliente pode repetir o pedido sem saber se a tentativa anterior já teve efeito. E se o banco grava a aprovação enquanto o broker está fora do ar, outras partes da operação podem ficar sem saber o que aconteceu.
+
+O TripFlow usa esse fluxo para demonstrar **como manter decisões e efeitos consistentes em uma API multiempresa**. O orçamento é conferido sob lock, a API pode devolver a resposta de uma tentativa anterior e a mudança de status deixa um evento na mesma transação. A demo mostra o caminho bem-sucedido e verifica explicitamente excesso de orçamento, repetição de solicitação e acesso entre empresas.
 
 ## Tecnologias
 
@@ -88,6 +94,8 @@ eventos) e mostra ✔ ou ✘ em cada verificação. O mesmo script roda no CI.
 ### Com Docker (ambiente completo)
 
 ```bash
+git clone https://github.com/acamilateixeira/Tripflow.git
+cd Tripflow
 cp .env.example .env
 docker compose up -d --build
 docker compose exec api php artisan key:generate
@@ -97,7 +105,11 @@ docker compose exec api php artisan migrate --seed
 Sobe API (`:8000`), worker de filas, relay da outbox, consumidor, MySQL, Redis e
 RabbitMQ (painel em `http://localhost:15672`, guest/guest).
 
+Confirme que a API está disponível com `curl http://localhost:8000/api/health`. Com PHP no terminal, execute `bash scripts/demo.sh`. Você também pode usar a coleção Insomnia abaixo para percorrer os endpoints manualmente.
+
 ### Local, sem Docker
+
+No diretório do projeto, com PHP e Composer instalados:
 
 ```bash
 composer install

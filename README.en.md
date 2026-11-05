@@ -6,7 +6,13 @@
 
 **A corporate travel API with budget-aware approvals and domain events.** TripFlow covers the lifecycle from travel request to booking, with per-company access rules, concurrency control, and asynchronous integration. Bookings use a simulated supplier.
 
-[Stack](#technology-stack) · [Technical decisions](#technical-decisions) · [Architecture](#architecture) · [Run the demo](#run-the-demo) · [ADRs](#architecture-decision-records)
+[The problem](#the-problem) · [Stack](#technology-stack) · [Technical decisions](#technical-decisions) · [Architecture](#architecture) · [Run the demo](#run-the-demo) · [ADRs](#architecture-decision-records)
+
+## The problem
+
+A travel request commits part of a shared budget and can trigger bookings in external systems. When two approvals read the same balance before either commits, both can look valid while exceeding the limit together. If a booking call times out, the client can retry without knowing whether the first attempt took effect. If the database commits an approval while the broker is unavailable, other parts of the operation can miss the change.
+
+TripFlow uses this workflow to demonstrate **how a multi-tenant API keeps decisions and side effects consistent**. It checks the budget under a lock, can replay a previous response on retry, and records an event in the same transaction as the state change. The demo covers the successful path and checks over-budget approvals, duplicate requests, and cross-company access.
 
 ## Technology stack
 
@@ -75,6 +81,8 @@ The demo checks sign-in, idempotency, approval, budgets, booking, tenant isolati
 ### Docker Compose
 
 ```bash
+git clone https://github.com/acamilateixeira/Tripflow.git
+cd Tripflow
 cp .env.example .env
 docker compose up -d --build
 docker compose exec api php artisan key:generate
@@ -83,7 +91,11 @@ docker compose exec api php artisan migrate --seed
 
 The API listens on port 8000. The RabbitMQ management UI is on port 15672 with the local demo login `guest` / `guest`.
 
+Check the API with `curl http://localhost:8000/api/health`. With PHP installed on your host, run `bash scripts/demo.sh`. The Insomnia collection below can also walk through the endpoints manually.
+
 ### Local PHP and SQLite
+
+From the project directory, with PHP and Composer installed:
 
 ```bash
 composer install
