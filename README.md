@@ -115,14 +115,14 @@ No diretório do projeto, com PHP e Composer instalados:
 composer install
 cp .env.example .env && php artisan key:generate
 touch database/database.sqlite
-DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan migrate --seed
-DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan serve --no-reload
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=database QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan migrate --seed
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=database QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan serve --no-reload
 ```
 
 Em outro terminal, use as mesmas variáveis ao rodar o roteiro, para que o relay local encontre o mesmo banco.
 
 ```bash
-DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log bash scripts/demo.sh
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=database QUEUE_CONNECTION=sync MESSAGING_DRIVER=log bash scripts/demo.sh
 ```
 
 **Usuários do seed** (senha `password`): `viajante@acme.test`, `gestora@acme.test`,
@@ -134,7 +134,7 @@ A coleção do **Insomnia** está em [`insomnia/tripflow.json`](insomnia/tripflo
 Application → Import → selecione o arquivo. Ela traz o ambiente local, os logins e
 todos os endpoints, com exemplos de idempotência e dos erros de negócio.
 
-Entre como viajante e como gestora e copie os tokens nas variáveis da coleção. Ao criar a solicitação, use datas futuras, copie o ID retornado em `travel_request_id` e use o mesmo mês na consulta de orçamento. Para repetir o roteiro completo com datas geradas na hora, use `bash scripts/demo.sh` com a API e o ambiente local ativos. O modo SQLite usa o driver de log. Use Docker Compose ou Codespaces para testar a publicação em RabbitMQ.
+Entre como viajante e como gestora e copie os tokens nas variáveis da coleção. Ao criar a solicitação, use datas futuras, copie o ID retornado em `travel_request_id` e use o mesmo mês na consulta de orçamento. Para repetir o roteiro completo com datas geradas na hora, use `bash scripts/demo.sh` com a API e o ambiente local ativos. O modo SQLite usa cache no banco para preservar a idempotência entre requisições e grava os eventos no log. Use Docker Compose ou Codespaces para testar a publicação em RabbitMQ.
 
 | Método | Rota | Descrição |
 |---|---|---|
