@@ -112,6 +112,8 @@ The SQLite setup logs events locally. Use Docker Compose or Codespaces to exerci
 
 Import the [Insomnia collection](insomnia/tripflow.json) for request examples and demo accounts. Seeded accounts include `viajante@acme.test`, `gestora@acme.test`, `admin@acme.test`, and `viajante@globex.test`. The local demo password is `password`.
 
+Sign in as the traveler and the approver, then copy their tokens to the collection variables. Set future dates when creating a request, save the returned ID in `travel_request_id`, and use the same month when checking the budget. Run `bash scripts/demo.sh` for an automated walkthrough that generates fresh dates. Run it with the API and local environment active.
+
 | Method | Route | Purpose |
 | --- | --- | --- |
 | POST | `/api/v1/auth/token` | Sign in and get a bearer token |

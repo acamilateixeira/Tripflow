@@ -128,6 +128,8 @@ A coleção do **Insomnia** está em [`insomnia/tripflow.json`](insomnia/tripflo
 Application → Import → selecione o arquivo. Ela traz o ambiente local, os logins e
 todos os endpoints, com exemplos de idempotência e dos erros de negócio.
 
+Entre como viajante e como gestora e copie os tokens nas variáveis da coleção. Ao criar a solicitação, use datas futuras, copie o ID retornado em `travel_request_id` e use o mesmo mês na consulta de orçamento. Para repetir o roteiro completo com datas geradas na hora, use `bash scripts/demo.sh` com a API e o ambiente local ativos. O modo SQLite usa o driver de log. Use Docker Compose ou Codespaces para testar a publicação em RabbitMQ.
+
 | Método | Rota | Descrição |
 |---|---|---|
 | POST | `/api/v1/auth/token` | Login, retorna token Bearer (8 h) |
