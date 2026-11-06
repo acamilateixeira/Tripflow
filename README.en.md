@@ -103,7 +103,13 @@ cp .env.example .env
 php artisan key:generate
 touch database/database.sqlite
 DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan migrate --seed
-DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan serve
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan serve --no-reload
+```
+
+In a second terminal, use the same variables when running the walkthrough so the local relay reads the same database.
+
+```bash
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log bash scripts/demo.sh
 ```
 
 The SQLite setup logs events locally. Use Docker Compose or Codespaces to exercise the broker and shared locks.

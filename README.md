@@ -116,7 +116,13 @@ composer install
 cp .env.example .env && php artisan key:generate
 touch database/database.sqlite
 DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan migrate --seed
-DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan serve
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log php artisan serve --no-reload
+```
+
+Em outro terminal, use as mesmas variáveis ao rodar o roteiro, para que o relay local encontre o mesmo banco.
+
+```bash
+DB_CONNECTION=sqlite DB_DATABASE="$PWD/database/database.sqlite" CACHE_STORE=array QUEUE_CONNECTION=sync MESSAGING_DRIVER=log bash scripts/demo.sh
 ```
 
 **Usuários do seed** (senha `password`): `viajante@acme.test`, `gestora@acme.test`,
