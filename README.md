@@ -2,7 +2,7 @@
 
 # TripFlow
 
-**Português** · [English](README.en.md) · **[Ver a demo gravada](https://acamilateixeira.github.io/tripflow/?lang=pt)**
+**Português** · [English](README.en.md) · **[Ver a demo gravada](https://acamilateixeira.github.io/Tripflow/?lang=pt)**
 
 **API de viagens corporativas com aprovação por orçamento e eventos de domínio.** O TripFlow cobre da solicitação à emissão de reservas, com regras de acesso por empresa, controle de concorrência e integração assíncrona. A emissão usa um fornecedor simulado.
 
@@ -77,7 +77,7 @@ Cada transição registra um evento na outbox (`travel_request.submitted`, `.app
 
 ### Ver sem rodar nada (demo gravada)
 
-A [demo gravada](https://acamilateixeira.github.io/tripflow/?lang=pt) mostra requisições e respostas reais de seis cenários: reenvio com Idempotency-Key, fluxo de aprovação, **duas aprovações disparadas ao mesmo tempo** disputando o mesmo orçamento, reserva reenviada, isolamento entre empresas e outbox publicando no RabbitMQ. A cada mudança na `main`, o [workflow da demo](.github/workflows/demo-pages.yml) sobe a API com MySQL, Redis e RabbitMQ, roda [`scripts/record-demo.php`](scripts/record-demo.php) e publica a gravação. Se alguma das 16 verificações falhar, a página não é atualizada.
+A [demo gravada](https://acamilateixeira.github.io/Tripflow/?lang=pt) mostra requisições e respostas reais de seis cenários: reenvio com Idempotency-Key, fluxo de aprovação, **duas aprovações disparadas ao mesmo tempo** disputando o mesmo orçamento, reserva reenviada, isolamento entre empresas e outbox publicando no RabbitMQ. A cada mudança na `main`, o [workflow da demo](.github/workflows/demo-pages.yml) sobe a API com MySQL, Redis e RabbitMQ, roda [`scripts/record-demo.php`](scripts/record-demo.php) e publica a gravação. Se alguma das 16 verificações falhar, a página não é atualizada.
 
 ### No navegador, sem instalar nada (GitHub Codespaces)
 
