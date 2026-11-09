@@ -2,7 +2,7 @@
 
 # TripFlow
 
-[Português](README.md) · **English** · **[See the recorded demo](https://acamilateixeira.github.io/tripflow/?lang=en)**
+[Português](README.md) · **English** · **[See the recorded demo](https://acamilateixeira.github.io/Tripflow/?lang=en)**
 
 **A corporate travel API with budget-aware approvals and domain events.** TripFlow covers the lifecycle from travel request to booking, with per-company access rules, concurrency control, and asynchronous integration. Bookings use a simulated supplier.
 
@@ -68,7 +68,7 @@ Cancellation is available from draft, pending approval, approved, and booked. Li
 
 ### See it without running anything (recorded demo)
 
-The [recorded demo](https://acamilateixeira.github.io/tripflow/?lang=en) shows real requests and responses for six scenarios: a retry with an Idempotency-Key, the approval workflow, **two approvals fired at the same time** competing for one budget, a retried booking, tenant isolation, and the outbox publishing to RabbitMQ. On every change to `main`, the [demo workflow](.github/workflows/demo-pages.yml) starts the API with MySQL, Redis, and RabbitMQ, runs [`scripts/record-demo.php`](scripts/record-demo.php), and publishes the recording. If any of the 16 checks fails, the page is not updated.
+The [recorded demo](https://acamilateixeira.github.io/Tripflow/?lang=en) shows real requests and responses for six scenarios: a retry with an Idempotency-Key, the approval workflow, **two approvals fired at the same time** competing for one budget, a retried booking, tenant isolation, and the outbox publishing to RabbitMQ. On every change to `main`, the [demo workflow](.github/workflows/demo-pages.yml) starts the API with MySQL, Redis, and RabbitMQ, runs [`scripts/record-demo.php`](scripts/record-demo.php), and publishes the recording. If any of the 16 checks fails, the page is not updated.
 
 ### GitHub Codespaces
 
