@@ -2,7 +2,7 @@
 
 # TripFlow
 
-**Português** · [English](README.en.md)
+**Português** · [English](README.en.md) · **[Ver a demo gravada](https://acamilateixeira.github.io/tripflow/?lang=pt)**
 
 **API de viagens corporativas com aprovação por orçamento e eventos de domínio.** O TripFlow cobre da solicitação à emissão de reservas, com regras de acesso por empresa, controle de concorrência e integração assíncrona. A emissão usa um fornecedor simulado.
 
@@ -74,6 +74,10 @@ cancel: a partir de draft, pending_approval, approved e booked
 Cada transição registra um evento na outbox (`travel_request.submitted`, `.approved`, `.rejected`, `.booked`, `.cancelled`).
 
 ## Como rodar
+
+### Ver sem rodar nada (demo gravada)
+
+A [demo gravada](https://acamilateixeira.github.io/tripflow/?lang=pt) mostra requisições e respostas reais de seis cenários: reenvio com Idempotency-Key, fluxo de aprovação, **duas aprovações disparadas ao mesmo tempo** disputando o mesmo orçamento, reserva reenviada, isolamento entre empresas e outbox publicando no RabbitMQ. A cada mudança na `main`, o [workflow da demo](.github/workflows/demo-pages.yml) sobe a API com MySQL, Redis e RabbitMQ, roda [`scripts/record-demo.php`](scripts/record-demo.php) e publica a gravação. Se alguma das 16 verificações falhar, a página não é atualizada.
 
 ### No navegador, sem instalar nada (GitHub Codespaces)
 
@@ -174,6 +178,7 @@ vendor/bin/pint --test          # estilo
 | Workflow | Quando | O que faz |
 |---|---|---|
 | [`ci.yml`](.github/workflows/ci.yml) | push e PR | Pint, Larastan, `composer audit`, testes com MySQL + Redis + RabbitMQ, cobertura mínima de 80% e build da imagem |
+| [`demo-pages.yml`](.github/workflows/demo-pages.yml) | push na `main` | Grava os cenários contra a API real e publica a demo no GitHub Pages |
 | [`pr-validation.yml`](.github/workflows/pr-validation.yml) | PR | Título em Conventional Commits, descrição preenchida, alerta de PR grande, migrations reversíveis |
 | [`ai-review.yml`](.github/workflows/ai-review.yml) | PR | Revisão do Claude com comentários inline, guiada pelo [`CLAUDE.md`](CLAUDE.md) e pelos ADRs |
 | [`release.yml`](.github/workflows/release.yml) | tag `v*` | Publica a imagem no GHCR e cria o release com notas dos PRs |

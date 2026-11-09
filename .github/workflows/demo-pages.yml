@@ -1,0 +1,97 @@
+name: Demo gravada (GitHub Pages)
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  record:
+    name: Gravar a demo contra MySQL, Redis e RabbitMQ
+    runs-on: ubuntu-latest
+
+    services:
+      mysql:
+        image: mysql:8.4
+        env:
+          MYSQL_DATABASE: tripflow
+          MYSQL_ROOT_PASSWORD: root
+        ports: ['3306:3306']
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 -proot"
+          --health-interval=5s --health-timeout=3s --health-retries=20
+      redis:
+        image: redis:7-alpine
+        ports: ['6379:6379']
+        options: --health-cmd="redis-cli ping" --health-interval=5s --health-retries=10
+      rabbitmq:
+        image: rabbitmq:4-alpine
+        ports: ['5672:5672']
+        options: >-
+          --health-cmd="rabbitmq-diagnostics -q ping"
+          --health-interval=10s --health-timeout=5s --health-retries=10
+
+    env:
+      DB_CONNECTION: mysql
+      DB_HOST: 127.0.0.1
+      DB_PORT: 3306
+      DB_DATABASE: tripflow
+      DB_USERNAME: root
+      DB_PASSWORD: root
+      CACHE_STORE: redis
+      REDIS_HOST: 127.0.0.1
+      RABBITMQ_HOST: 127.0.0.1
+      MESSAGING_DRIVER: rabbitmq
+      LOG_CHANNEL: single
+      DEMO_STACK: Laravel 12 · MySQL 8.4 · Redis 7 · RabbitMQ 4
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: '8.3'
+          extensions: redis, sockets, pcntl, pdo_mysql, curl
+          coverage: none
+
+      - run: composer install --prefer-dist --no-interaction --no-progress
+
+      - name: Preparar aplicação
+        run: |
+          cp .env.example .env
+          php artisan key:generate
+          php artisan migrate:fresh --seed --force
+
+      - name: Subir a API com 4 workers (para as chamadas em paralelo)
+        run: |
+          PHP_CLI_SERVER_WORKERS=4 php artisan serve --port=8000 --no-reload > storage/logs/serve.log 2>&1 &
+          for _ in $(seq 1 20); do curl -sf http://localhost:8000/api/health >/dev/null && break; sleep 1; done
+
+      - name: Gravar os cenários (falha se alguma verificação falhar)
+        run: |
+          mkdir -p _site
+          cp docs/demo/index.html _site/
+          php scripts/record-demo.php http://localhost:8000/api _site/recording.json
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: _site
+
+  deploy:
+    needs: record
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

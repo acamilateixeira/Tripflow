@@ -2,7 +2,7 @@
 
 # TripFlow
 
-[Português](README.md) · **English**
+[Português](README.md) · **English** · **[See the recorded demo](https://acamilateixeira.github.io/tripflow/?lang=en)**
 
 **A corporate travel API with budget-aware approvals and domain events.** TripFlow covers the lifecycle from travel request to booking, with per-company access rules, concurrency control, and asynchronous integration. Bookings use a simulated supplier.
 
@@ -65,6 +65,10 @@ draft → pending_approval → approved → booked
 Cancellation is available from draft, pending approval, approved, and booked. Lifecycle transitions record events in the outbox.
 
 ## Run the demo
+
+### See it without running anything (recorded demo)
+
+The [recorded demo](https://acamilateixeira.github.io/tripflow/?lang=en) shows real requests and responses for six scenarios: a retry with an Idempotency-Key, the approval workflow, **two approvals fired at the same time** competing for one budget, a retried booking, tenant isolation, and the outbox publishing to RabbitMQ. On every change to `main`, the [demo workflow](.github/workflows/demo-pages.yml) starts the API with MySQL, Redis, and RabbitMQ, runs [`scripts/record-demo.php`](scripts/record-demo.php), and publishes the recording. If any of the 16 checks fails, the page is not updated.
 
 ### GitHub Codespaces
 
@@ -141,7 +145,7 @@ vendor/bin/phpstan analyse
 vendor/bin/pint --test
 ```
 
-Pest covers domain, feature, architecture, and RabbitMQ integration tests. CI exercises MySQL, Redis, and RabbitMQ and builds the Docker image. Tagged releases publish an image to GHCR. [GitHub Actions workflows](.github/workflows)
+Pest covers domain, feature, architecture, and RabbitMQ integration tests. CI exercises MySQL, Redis, and RabbitMQ, runs the demo recorder, and builds the Docker image. The [demo workflow](.github/workflows/demo-pages.yml) republishes the recorded demo after each change to `main`. Tagged releases publish an image to GHCR. [GitHub Actions workflows](.github/workflows)
 
 ## Architecture decision records
 
