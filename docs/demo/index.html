@@ -1,0 +1,197 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TripFlow · Demo da API</title>
+<meta name="description" content="Requisições e respostas reais da API TripFlow gravadas no CI: idempotência, aprovações concorrentes, reservas, isolamento e outbox.">
+<style>
+:root{--paper:#f7f6f2;--card:#fff;--ink:#1f2328;--muted:#5d6470;--line:#dcdad2;--accent:#5b3fa6;--ok:#2f6b3a;--bad:#a12a2a;--code:#16181d;--code-ink:#e6e6e6}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+body{margin:0;background:var(--paper);color:var(--ink);font:15px/1.6 system-ui,-apple-system,"Segoe UI",sans-serif}
+a{color:var(--accent)}
+button{font:inherit}
+:focus-visible{outline:3px solid var(--accent);outline-offset:3px}
+.wrap{max-width:1180px;margin:0 auto;padding:0 20px}
+header{border-bottom:1px solid var(--line);background:var(--card)}
+.top{display:flex;align-items:center;justify-content:space-between;gap:16px;min-height:64px}
+.brand{font-weight:800;font-size:20px;letter-spacing:-.5px}
+.brand span{color:var(--accent)}
+.lang{display:flex;border:1px solid var(--line);border-radius:30px;padding:3px;gap:2px}
+.lang button{border:0;background:none;border-radius:20px;padding:5px 10px;font-size:12px;font-weight:700;color:var(--muted);cursor:pointer}
+.lang button[aria-pressed=true]{background:var(--ink);color:#fff}
+.intro{padding:36px 0 20px}
+.eyebrow{font-size:12px;font-weight:700;letter-spacing:1.4px;text-transform:uppercase;color:var(--accent);margin:0 0 8px}
+h1{font-size:clamp(28px,4vw,40px);line-height:1.15;letter-spacing:-1px;margin:0 0 12px}
+.lead{max-width:760px;color:var(--muted);margin:0 0 14px}
+.meta{display:flex;flex-wrap:wrap;gap:8px 16px;font-size:13px;color:var(--muted);margin:0 0 18px}
+.meta strong{color:var(--ink)}
+.actions{display:flex;flex-wrap:wrap;gap:10px}
+.btn{display:inline-flex;align-items:center;gap:8px;padding:10px 14px;border-radius:6px;border:1px solid var(--line);background:var(--card);color:var(--ink);text-decoration:none;font-weight:600;font-size:14px}
+.btn.primary{background:var(--accent);border-color:var(--accent);color:#fff}
+.layout{display:grid;grid-template-columns:280px 1fr;gap:24px;padding:12px 0 56px}
+.tabs{display:flex;flex-direction:column;gap:6px;position:sticky;top:12px;align-self:start}
+.tabs button{display:flex;gap:10px;align-items:flex-start;text-align:left;border:1px solid var(--line);background:var(--card);border-radius:8px;padding:12px;cursor:pointer;color:var(--ink)}
+.tabs button[aria-pressed=true]{border-color:var(--accent);box-shadow:inset 3px 0 0 var(--accent)}
+.tabs .n{font-weight:800;color:var(--accent);min-width:18px}
+.tabs .t{font-weight:600;font-size:14px;line-height:1.35}
+.tabs .c{display:block;font-size:12px;color:var(--ok);font-weight:600;margin-top:2px}
+.summary{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:18px 20px;margin-bottom:16px}
+.summary h2{margin:0 0 6px;font-size:22px;letter-spacing:-.4px}
+.summary p{margin:0;color:var(--muted)}
+.step{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:16px 18px;margin-bottom:14px}
+.step h3{margin:0 0 4px;font-size:16px}
+.step .note{margin:0 0 10px;color:var(--muted);font-size:14px}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.6px;text-transform:uppercase;background:#efe9fb;color:var(--accent);border-radius:4px;padding:2px 6px;margin-left:6px;vertical-align:2px}
+.checks{list-style:none;padding:0;margin:0 0 12px;display:flex;flex-wrap:wrap;gap:6px}
+.checks li{font-size:13px;font-weight:600;border-radius:4px;padding:3px 8px;background:#e8f2ea;color:var(--ok)}
+.checks li.bad{background:#f8e5e5;color:var(--bad)}
+.calls{display:grid;gap:12px}
+.calls.parallel{grid-template-columns:1fr 1fr}
+.call{display:grid;grid-template-columns:1fr 1fr;gap:10px;min-width:0}
+.calls.parallel .call{grid-template-columns:1fr}
+.panel{background:var(--code);color:var(--code-ink);border-radius:6px;padding:10px 12px;min-width:0}
+.panel .label{display:flex;justify-content:space-between;gap:8px;font:600 11px/1.4 ui-monospace,SFMono-Regular,Menlo,monospace;letter-spacing:.6px;text-transform:uppercase;color:#9aa0aa;margin-bottom:6px}
+.status{font-weight:800}
+.s2{color:#7ee2a0}.s4{color:#ffb86b}.s5{color:#ff7b7b}
+pre{margin:0;font:12.5px/1.55 ui-monospace,SFMono-Regular,Menlo,monospace;white-space:pre-wrap;word-break:break-word;max-height:300px;overflow:auto}
+.line{color:#c7b8ff}
+.hdr{color:#9aa0aa}
+footer{border-top:1px solid var(--line);padding:20px 0 32px;color:var(--muted);font-size:13px}
+.error{background:#f8e5e5;color:var(--bad);border-radius:8px;padding:16px}
+@media(max-width:860px){.layout{grid-template-columns:1fr}.tabs{position:static;flex-direction:row;overflow-x:auto;padding-bottom:4px}.tabs button{min-width:200px}.call,.calls.parallel{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap top">
+    <div class="brand">TripFlow<span> /</span> <span data-i18n="tag" style="font-weight:600;font-size:13px;color:var(--muted)"></span></div>
+    <div class="lang" role="group" aria-label="Idioma / Language">
+      <button type="button" data-lang="pt" lang="pt-BR">PT</button>
+      <button type="button" data-lang="en" lang="en">EN</button>
+    </div>
+  </div>
+</header>
+<main class="wrap">
+  <section class="intro">
+    <p class="eyebrow" data-i18n="eyebrow"></p>
+    <h1 data-i18n="title"></h1>
+    <p class="lead" data-i18n="lead"></p>
+    <p class="meta" id="meta"></p>
+    <div class="actions">
+      <a class="btn primary" href="https://codespaces.new/acamilateixeira/tripflow" target="_blank" rel="noopener" data-i18n="codespaces"></a>
+      <a class="btn" href="https://github.com/acamilateixeira/tripflow" target="_blank" rel="noopener" data-i18n="code"></a>
+      <a class="btn" id="run-link" target="_blank" rel="noopener" data-i18n="run" hidden></a>
+    </div>
+  </section>
+  <div class="layout">
+    <nav class="tabs" id="tabs" aria-label="Cenários"></nav>
+    <section id="scenario" aria-live="polite"></section>
+  </div>
+</main>
+<footer class="wrap" data-i18n="footer"></footer>
+<script>
+const text = {
+  pt: {
+    tag: 'demo da API', eyebrow: 'Demo gravada da API', title: 'Viagens corporativas sob concorrência, reenvio e falha',
+    lead: 'Cada requisição e resposta desta página foi gravada contra a API real no CI, com MySQL, Redis e RabbitMQ. Escolha um cenário. Para rodar você mesmo, abra no Codespaces e execute bash scripts/demo.sh.',
+    codespaces: 'Rodar no Codespaces ↗', code: 'Ver o código ↗', run: 'Execução no CI ↗',
+    recorded: 'Gravado em', commit: 'commit', checks: (n, f) => `${n - f} de ${n} verificações passaram`,
+    stack: 'Stack', request: 'Requisição', response: 'Resposta', parallel: 'em paralelo',
+    footer: 'Dados fictícios do seed. Tokens mascarados. O fornecedor de reservas é simulado. A gravação é refeita a cada mudança na main; se uma verificação falhar, a página não é publicada.',
+    failed: 'Não foi possível carregar a gravação.', locale: 'pt-BR',
+  },
+  en: {
+    tag: 'API demo', eyebrow: 'Recorded API demo', title: 'Corporate travel under concurrency, retries and failure',
+    lead: 'Every request and response on this page was recorded against the real API in CI, with MySQL, Redis and RabbitMQ. Pick a scenario. To run it yourself, open it in Codespaces and run bash scripts/demo.sh.',
+    codespaces: 'Run in Codespaces ↗', code: 'View the code ↗', run: 'CI run ↗',
+    recorded: 'Recorded on', commit: 'commit', checks: (n, f) => `${n - f} of ${n} checks passed`,
+    stack: 'Stack', request: 'Request', response: 'Response', parallel: 'in parallel',
+    footer: 'Fictional seed data. Tokens masked. The booking supplier is simulated. The recording is redone on every change to main; if a check fails, the page is not published.',
+    failed: 'Could not load the recording.', locale: 'en',
+  },
+};
+const params = new URLSearchParams(location.search);
+let lang = params.get('lang') === 'en' || (!params.get('lang') && !navigator.language?.toLowerCase().startsWith('pt')) ? 'en' : 'pt';
+let data = null;
+let current = null;
+
+const esc = (s) => String(s).replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]);
+const json = (v) => esc(JSON.stringify(v, null, 2));
+
+function renderStatic() {
+  document.documentElement.lang = text[lang].locale;
+  document.querySelectorAll('[data-i18n]').forEach((el) => { el.textContent = text[lang][el.dataset.i18n]; });
+  document.querySelectorAll('.lang button').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.lang === lang)));
+  if (!data) return;
+  const t = text[lang];
+  const date = new Date(data.recorded_at).toLocaleString(t.locale, { dateStyle: 'medium', timeStyle: 'short' });
+  document.getElementById('meta').innerHTML =
+    `<span>${t.recorded} <strong>${esc(date)}</strong></span>` +
+    (data.commit ? `<span>${t.commit} <a href="https://github.com/acamilateixeira/tripflow/commit/${esc(data.commit)}" target="_blank" rel="noopener"><strong>${esc(data.commit.slice(0, 7))}</strong></a></span>` : '') +
+    `<span>${t.stack} <strong>${esc(data.stack)}</strong></span>` +
+    `<span><strong>${t.checks(data.checks.total, data.checks.failed)}</strong></span>`;
+  const run = document.getElementById('run-link');
+  if (data.run_url) { run.href = data.run_url; run.hidden = false; }
+  renderTabs();
+  renderScenario();
+}
+
+function renderTabs() {
+  const tabs = document.getElementById('tabs');
+  tabs.innerHTML = data.scenarios.map((s, i) => {
+    const steps = data.steps.filter((st) => st.scenario === s.id);
+    const total = steps.reduce((n, st) => n + st.checks.length, 0);
+    const ok = steps.reduce((n, st) => n + st.checks.filter((c) => c.ok).length, 0);
+    return `<button type="button" data-id="${esc(s.id)}" aria-pressed="${s.id === current}"><span class="n">${i + 1}</span><span><span class="t">${esc(s.title[lang])}</span><span class="c">✓ ${ok}/${total}</span></span></button>`;
+  }).join('');
+  tabs.querySelectorAll('button').forEach((b) => b.addEventListener('click', () => { current = b.dataset.id; history.replaceState(null, '', `?lang=${lang}#${current}`); renderTabs(); renderScenario(); }));
+}
+
+function renderCall(call) {
+  const t = text[lang];
+  const req = call.request;
+  const res = call.response;
+  const status = res.status;
+  const headers = Object.entries(res.headers).map(([k, v]) => `<span class="hdr">${esc(k)}: ${esc(v)}</span>`).join('\n');
+  return `<div class="call">
+    <div class="panel"><div class="label"><span>${t.request}</span></div><pre><span class="line">${esc(req.method)} ${esc(req.url)}</span>
+<span class="hdr">${req.headers.map(esc).join('\n')}</span>${req.body ? '\n\n' + json(req.body) : ''}</pre></div>
+    <div class="panel"><div class="label"><span>${t.response}</span><span class="status s${String(status)[0]}">HTTP ${status} · ${res.ms} ms</span></div><pre>${headers ? headers + '\n\n' : ''}${json(res.body)}</pre></div>
+  </div>`;
+}
+
+function renderScenario() {
+  const t = text[lang];
+  const scenario = data.scenarios.find((s) => s.id === current);
+  const steps = data.steps.filter((s) => s.scenario === current);
+  document.getElementById('scenario').innerHTML =
+    `<div class="summary"><h2>${esc(scenario.title[lang])}</h2><p>${esc(scenario.summary[lang])}</p></div>` +
+    steps.map((step) => `<article class="step">
+      <h3>${esc(step.title[lang])}${step.parallel ? `<span class="badge">${t.parallel}</span>` : ''}</h3>
+      ${step.note[lang] ? `<p class="note">${esc(step.note[lang])}</p>` : ''}
+      ${step.checks.length ? `<ul class="checks">${step.checks.map((c) => `<li class="${c.ok ? '' : 'bad'}">${c.ok ? '✓' : '✗'} ${esc(c.label[lang])}</li>`).join('')}</ul>` : ''}
+      <div class="calls ${step.parallel ? 'parallel' : ''}">${step.calls.map(renderCall).join('')}</div>
+    </article>`).join('');
+}
+
+document.querySelectorAll('.lang button').forEach((b) => b.addEventListener('click', () => {
+  lang = b.dataset.lang;
+  history.replaceState(null, '', `?lang=${lang}${current ? '#' + current : ''}`);
+  renderStatic();
+}));
+
+renderStatic();
+fetch('recording.json', { cache: 'no-store' })
+  .then((r) => { if (!r.ok) throw new Error(r.status); return r.json(); })
+  .then((d) => {
+    data = d;
+    const fromHash = location.hash.slice(1);
+    current = d.scenarios.some((s) => s.id === fromHash) ? fromHash : d.scenarios[0].id;
+    renderStatic();
+  })
+  .catch(() => { document.getElementById('scenario').innerHTML = `<p class="error">${text[lang].failed}</p>`; });
+</script>
+</body>
+</html>
