@@ -34,6 +34,7 @@ O domínio de viagens concentra os casos de concorrência, isolamento entre empr
 | Evento publicado sem o banco ter commitado (ou o contrário) | A outbox registra o evento na transação da mudança de estado. O relay publica depois e reprocessa falhas com backoff. | [ADR 0002](docs/adr/0002-transactional-outbox.md) |
 | Duas aprovações simultâneas estourando o orçamento | `SELECT … FOR UPDATE` serializa aprovações no mesmo centro de custo. Uma ordem fixa de locks reduz o risco de deadlock. | [ADR 0003](docs/adr/0003-concorrencia-orcamento-e-reservas.md) |
 | App reenvia a requisição por timeout e duplica a reserva | `Idempotency-Key` permite repetir a resposta. O lock distribuído coordena a emissão sem manter uma transação aberta durante a chamada ao fornecedor. | `EnsureIdempotency`, `BookTravelRequest` |
+| Fornecedor confirma o voo e o hotel falha, ou a viagem é cancelada no meio da emissão | Reservas já confirmadas são canceladas no fornecedor antes de o erro subir (compensação). O cancelamento usa o mesmo lock da emissão. | [ADR 0005](docs/adr/0005-compensacao-na-emissao.md) |
 | Broker reentrega a mesma mensagem | A *inbox* deduplica pelo ID da mensagem, necessário porque o relay oferece entrega pelo menos uma vez. | `NotifyTravelerOnDecision` |
 | Empresa A enxergando dados da empresa B | O escopo global por `company_id` reduz a dependência de filtros manuais. O 404 evita revelar recursos de outra empresa. | [ADR 0004](docs/adr/0004-isolamento-multi-tenant.md) |
 | Status "pulando" etapas | A máquina de estados concentra transições válidas em `transitionTo()`. | `TravelRequestStatus` |
@@ -172,6 +173,11 @@ vendor/bin/pint --test          # estilo
   que controllers não acessam o banco e que não sobra `dd()` no código.
 - **Teste de integração** com RabbitMQ real verifica routing key, `message_id` e
   `correlation_id`. Roda no CI e é pulado localmente quando não há broker.
+- **Teste de concorrência** com duas conexões MySQL: uma segura o lock do centro
+  de custo e o teste prova que a aprovação espera por ele (`tests/Concurrency`).
+  Roda no CI e é pulado no SQLite.
+- **Consistência com o fornecedor**: falha no meio da emissão e cancelamento
+  concorrente, com um fornecedor de teste roteirizado (`BookingConsistencyTest`).
 
 ## CI/CD
 
@@ -195,6 +201,7 @@ vendor/bin/pint --test          # estilo
 - [0002 — Transactional outbox](docs/adr/0002-transactional-outbox.md)
 - [0003 — Concorrência no orçamento e nas reservas](docs/adr/0003-concorrencia-orcamento-e-reservas.md)
 - [0004 — Isolamento multi-tenant](docs/adr/0004-isolamento-multi-tenant.md)
+- [0005 — Compensação na emissão e lock compartilhado com o cancelamento](docs/adr/0005-compensacao-na-emissao.md)
 
 ## Próximos passos
 

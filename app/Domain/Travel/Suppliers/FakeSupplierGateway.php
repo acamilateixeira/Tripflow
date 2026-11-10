@@ -13,6 +13,9 @@ final class FakeSupplierGateway implements SupplierGateway
     /** @var list<BookingConfirmation> */
     public array $booked = [];
 
+    /** @var list<BookingConfirmation> */
+    public array $cancelled = [];
+
     public function book(TravelRequest $request, BookingType $type, string $supplier, int $amountCents): BookingConfirmation
     {
         $confirmation = new BookingConfirmation(
@@ -25,5 +28,10 @@ final class FakeSupplierGateway implements SupplierGateway
         $this->booked[] = $confirmation;
 
         return $confirmation;
+    }
+
+    public function cancel(BookingConfirmation $confirmation): void
+    {
+        $this->cancelled[] = $confirmation;
     }
 }

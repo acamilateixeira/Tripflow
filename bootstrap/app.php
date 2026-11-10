@@ -1,6 +1,7 @@
 <?php
 
 use App\Domain\Travel\Exceptions\DomainException;
+use App\Domain\Travel\Suppliers\SupplierUnavailable;
 use App\Http\Middleware\AssignCorrelationId;
 use App\Http\Middleware\EnsureIdempotency;
 use Illuminate\Database\Eloquent\ModelNotFoundException;
@@ -28,6 +29,12 @@ return Application::configure(basePath: dirname(__DIR__))
         $exceptions->render(fn (DomainException $e) => response()->json([
             'error' => ['code' => $e->errorCode, 'message' => $e->getMessage()],
         ], 422));
+
+        // Falha do fornecedor: 503 (não é erro do cliente). A compensação das reservas
+        // parciais já rodou em BookTravelRequest.
+        $exceptions->render(fn (SupplierUnavailable $e) => response()->json([
+            'error' => ['code' => 'supplier_unavailable', 'message' => 'O fornecedor não confirmou a reserva e a emissão não foi concluída. Tente novamente.'],
+        ], 503));
 
         $exceptions->render(function (NotFoundHttpException $e, Request $request) {
             if ($e->getPrevious() instanceof ModelNotFoundException) {
