@@ -76,4 +76,3 @@ it('a aprovação espera o lock do centro de custo segurado por outra transaçã
     expect(app(ApproveTravelRequest::class)->handle($request, $approver)->status)
         ->toBe(TravelRequestStatus::Approved);
 });
-
