@@ -43,11 +43,14 @@ final readonly class BudgetLedger
     /**
      * Soma do que já foi aprovado/reservado para viagens que partem no mês.
      * Deve ser chamada dentro da transação que segura o lock do centro de custo.
+     *
+     * Sem withoutGlobalScope('company'): o centro de custo já foi carregado com o
+     * escopo, então o filtro por empresa não muda o resultado, e manter o escopo
+     * segue a regra do ADR 0004 para código que roda com usuário logado.
      */
     public function committedCents(CostCenter $costCenter, CarbonImmutable $month): int
     {
         return (int) TravelRequest::query()
-            ->withoutGlobalScope('company')
             ->where('cost_center_id', $costCenter->id)
             ->whereIn('status', TravelRequestStatus::committingBudget())
             ->whereBetween('departure_on', [

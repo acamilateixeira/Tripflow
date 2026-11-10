@@ -34,6 +34,7 @@ TripFlow uses this workflow to demonstrate **how a multi-tenant API keeps decisi
 | Client retries can duplicate side effects | `Idempotency-Key` lets the API replay the saved response. A distributed lock coordinates booking without holding a database transaction open during the supplier call. | [Middleware](app/Http/Middleware/EnsureIdempotency.php) · [Booking action](app/Domain/Travel/Actions/BookTravelRequest.php) |
 | The broker can redeliver a message | An inbox deduplicates by message ID, which is necessary with at-least-once delivery. | [Consumer](app/Infrastructure/Messaging/Consumers/NotifyTravelerOnDecision.php) |
 | One company could see another company's travel data | A global scope applies the company filter automatically. A 404 keeps cross-company IDs from disclosing whether a resource exists. | [ADR 0004](docs/adr/0004-isolamento-multi-tenant.md) |
+| A supplier confirms the flight and the hotel fails, or the trip is cancelled mid-booking | Bookings already confirmed are cancelled at the supplier before the error propagates (compensation). Cancellation takes the same lock as booking. | [ADR 0005](docs/adr/0005-compensacao-na-emissao.md) |
 | A request can skip a lifecycle step | The state machine centralizes allowed transitions in `transitionTo()`. | [Status enum](app/Domain/Travel/Enums/TravelRequestStatus.php) |
 | A request is difficult to trace after an async handoff | The same identifier links the HTTP request, JSON logs, and asynchronous message. | [Correlation middleware](app/Http/Middleware/AssignCorrelationId.php) |
 
@@ -155,6 +156,7 @@ The records are in Portuguese.
 - [0002 — Transactional outbox](docs/adr/0002-transactional-outbox.md)
 - [0003 — Concurrency for budgets and bookings](docs/adr/0003-concorrencia-orcamento-e-reservas.md)
 - [0004 — Multi-tenant isolation](docs/adr/0004-isolamento-multi-tenant.md)
+- [0005 — Booking compensation and a lock shared with cancellation](docs/adr/0005-compensacao-na-emissao.md)
 
 ## Next steps
 

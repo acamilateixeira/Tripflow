@@ -305,7 +305,7 @@
           "description": "Repita o mesmo valor para testar o replay"
         }
       ],
-      "description": "",
+      "description": "Envia Idempotency-Key. 503 supplier_unavailable se um fornecedor falhar: o que já tinha sido confirmado é cancelado no fornecedor e nada é gravado; dá para repetir com a mesma chave. 422 booking_in_progress se houver emissão ou cancelamento em andamento.",
       "metaSortKey": 16,
       "body": {
         "mimeType": "application/json",
@@ -329,7 +329,7 @@
           "value": "application/json"
         }
       ],
-      "description": "",
+      "description": "422 booking_in_progress enquanto uma emissão estiver em andamento (o cancelamento usa o mesmo lock).",
       "metaSortKey": 17,
       "body": {},
       "authentication": {
